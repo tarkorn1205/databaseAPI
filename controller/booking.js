@@ -49,6 +49,35 @@ exports.saveBooking = asyncHandler(async (req, res, next) => {
   res.status(200).json({ success: true, room_booking_id: user.insertId });
 });
 
+exports.saveadminuser = asyncHandler(async (req, res, next) => {
+  const {
+    username,
+    password,
+    name,
+    phone,
+    img,
+  } = req.body;
+  let user;
+
+  try {
+    user = await query(
+      "INSERT INTO `admin`(`name`, `username`, `password`, `phone`, `img`) VALUES (?,?,?,?,?)",
+      [
+        username,
+        password,
+        name,
+        phone,
+        img,
+      ]
+    );
+  } catch (err) {
+    console.log(err);
+    console.log(user);
+    return next(new errorResponse(`Insert Failed`, 400));
+  }
+  res.status(200).json({ success: true });
+});
+
 // @desc    Register
 exports.statustime = asyncHandler(async (req, res, next) => {
   const {

@@ -15,7 +15,7 @@ const query = util.promisify(db.query).bind(db);
 // @route   POST /api/v1/auth/register
 // @access  Public
 exports.register = asyncHandler(async (req, res, next) => {
-  let { username, password, name, phone } = req.body;
+  let { username, password, name, phone, img } = req.body;
   const uniqid = uniqPK();
 
   // Check Duplicate
@@ -32,8 +32,8 @@ exports.register = asyncHandler(async (req, res, next) => {
   try {
     password = await hashPassword(password);
     db.query(
-      "INSERT INTO `admin`(`name`,`username`, `password`, `phone`) VALUES (?,?,?,?)",
-      [name, username, password, phone]
+      "INSERT INTO `admin`(`name`, `username`, `password`, `phone`, `img`) VALUES (?,?,?,?,?)",
+      [name, username, password, phone, img]
     );
   } catch (err) {
     return next(new errorResponse(`Insert Failed`, 400));
