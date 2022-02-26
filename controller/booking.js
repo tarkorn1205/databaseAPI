@@ -50,25 +50,13 @@ exports.saveBooking = asyncHandler(async (req, res, next) => {
 });
 
 exports.saveadminuser = asyncHandler(async (req, res, next) => {
-  const {
-    username,
-    password,
-    name,
-    phone,
-    img,
-  } = req.body;
+  const { username, password, name, phone, img } = req.body;
   let user;
 
   try {
     user = await query(
       "INSERT INTO `admin`(`name`, `username`, `password`, `phone`, `img`) VALUES (?,?,?,?,?)",
-      [
-        username,
-        password,
-        name,
-        phone,
-        img,
-      ]
+      [username, password, name, phone, img]
     );
   } catch (err) {
     console.log(err);
@@ -122,27 +110,12 @@ exports.statustime = asyncHandler(async (req, res, next) => {
 // @route   POST /api/v1/auth/register
 // @access  Public
 exports.getonestatus = asyncHandler(async (req, res, next) => {
-  const { start_date } = req.body;
-
-  let querySQL = `SELECT
-        room_listname.id,
-          room_listname.name as room_listname,
-          room_booking.number_people,
-          room_booking.topic,
-          class_listname.name as class_listname,
-          room_booking.bookingname,
-          room_booking.number,
-          room_booking.start_date,
-          room_booking.start_time,
-          room_booking.end_date,
-          room_booking.end_time
-      FROM
-          room_booking
-      JOIN class_listname ON class_listname.id = room_booking.id_class
-      JOIN room_listname ON room_listname.id = room_booking.id_room
-      WHERE
-          start_date = ?`;
-  const user = await query(querySQL, [start_date]);
+  const { start_date, id } = req.body;
+  // console.log(start_date, id);
+  let querySQL = "SELECT room_listname.id, room_listname.name as room_listname, room_booking.number_people, room_booking.topic, class_listname.name as class_listname, room_booking.bookingname, room_booking.number, room_booking.start_date, room_booking.start_time, room_booking.end_date, room_booking.end_time FROM room_booking JOIN class_listname ON class_listname.id = room_booking.id_class JOIN room_listname ON room_listname.id = room_booking.id_room WHERE room_booking.id_room = ? AND start_date = ?";
+  // let querySQL = `SELECT room_listname.id, room_listname.name as room_listname, room_booking.number_people, room_booking.topic, class_listname.name as class_listname, room_booking.bookingname, room_booking.number, room_booking.start_date, room_booking.start_time, room_booking.end_date, room_booking.end_time FROM room_booking JOIN class_listname ON class_listname.id = room_booking.id_class JOIN room_listname ON room_listname.id = room_booking.id_room WHERE room_booking.id_room = ? AND start_date=?`;
+  const user = await query(querySQL,[id,start_date]);
+  // console.log(user);
   let userJson = Object.values(JSON.parse(JSON.stringify(user)));
 
   res.status(200).json({ success: true, data: userJson });
@@ -168,7 +141,7 @@ exports.getState = asyncHandler(async (req, res, next) => {
       JOIN room_listname ON room_listname.id = room_booking.id_room
       WHERE
           start_date = ?`;
-  const user = await query(querySQL, [start_date]);
+  const user = await query(querySQL,[start_date]);
   let userJson = Object.values(JSON.parse(JSON.stringify(user)));
 
   let emtyRoom = [];
@@ -192,17 +165,19 @@ exports.getid = asyncHandler(async (req, res, next) => {
   const { start_id } = req.body;
 
   let querySQL = `SELECT
-        room_listname.id,
+        room_listname.id as id_room,
           room_listname.name as room_listname,
           room_booking.number_people,
           room_booking.topic,
+          class_listname.id as id_class,
           class_listname.name as class_listname,
           room_booking.bookingname,
           room_booking.number,
           room_booking.start_date,
           room_booking.start_time,
           room_booking.end_date,
-          room_booking.end_time
+          room_booking.end_time,
+          room_booking.id
       FROM
           room_booking
       JOIN class_listname ON class_listname.id = room_booking.id_class
@@ -217,7 +192,6 @@ exports.getid = asyncHandler(async (req, res, next) => {
 
 exports.getupdate = asyncHandler(async (req, res, next) => {
   const {
-    
     id_room,
     id_class,
     number_people,
@@ -236,7 +210,6 @@ exports.getupdate = asyncHandler(async (req, res, next) => {
     user = await query(
       "UPDATE room_booking SET id_room=?,number_people=?,topic=?,id_class=?,bookingname=?,number=?,start_date=?,start_time=?,end_date=?,end_time=?,etc=? WHERE id=?",
       [
-        
         id_room,
         number_people,
         toping,
@@ -255,32 +228,27 @@ exports.getupdate = asyncHandler(async (req, res, next) => {
     console.log(err);
     return next(new errorResponse(`Insert Failed`, 400));
   }
-  
+
   // let userJson = Object.values(JSON.parse(JSON.stringify(user)));
 
-  res.status(200).json({ success: true, data: 'successfully' });
+  res.status(200).json({ success: true, data: "successfully" });
 });
 
 exports.getdelete = asyncHandler(async (req, res, next) => {
-  const {
-    start_id,
-  } = req.body;
+  const { start_id } = req.body;
   let user;
   try {
-    user = await query(
-      "DELETE FROM `room_booking` WHERE `id_room`= ?;",
-      [
-        start_id,
-      ]
-    );
+    user = await query("DELETE FROM `room_booking` WHERE `id_room`= ?;", [
+      start_id,
+    ]);
   } catch (err) {
     console.log(err);
     return next(new errorResponse(`Error`, 400));
   }
-  
+
   // let userJson = Object.values(JSON.parse(JSON.stringify(user)));
 
-  res.status(200).json({ success: true, data: 'successfully' });
+  res.status(200).json({ success: true, data: "successfully" });
 });
 // @desc    Register
 // @route   POST /api/v1/auth/register
@@ -301,4 +269,33 @@ exports.getCalendar = asyncHandler(async (req, res, next) => {
   });
 
   res.status(200).json({ success: true, data: userJson2 });
+});
+
+exports.getDash = asyncHandler(async (req, res, next) => {
+  const { start_date, end_date, date_now } = req.body;
+
+  let querySQL = "SELECT COUNT(username) AS countadmin FROM `admin`;";
+  const user = await query(querySQL);
+  let userJson = Object.values(JSON.parse(JSON.stringify(user)));
+
+  let roomlist = "SELECT COUNT(`id`) AS countlistname FROM `room_listname`";
+  const user2 = await query(roomlist);
+  let userlist = Object.values(JSON.parse(JSON.stringify(user2)));
+
+  let bookday =
+    "SELECT COUNT(start_date) AS countdate FROM `room_booking`WHERE `start_date`=?";
+  const user3 = await query(bookday, [date_now]);
+  let userday = Object.values(JSON.parse(JSON.stringify(user3)));
+
+  let bookmonth =
+    "SELECT COUNT(start_date) AS countmonth FROM `room_booking`WHERE `start_date` BETWEEN ? AND ?;";
+  const user4 = await query(bookmonth, [start_date, end_date]);
+  let usermonth = Object.values(JSON.parse(JSON.stringify(user4)));
+  let list = {
+    count_admin: userJson,
+    count_room: userlist,
+    count_day: userday,
+    count_month: usermonth,
+  };
+  res.status(200).json({ success: true, data: list });
 });
