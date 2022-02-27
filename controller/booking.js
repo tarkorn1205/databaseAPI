@@ -2,9 +2,10 @@ const asyncHandler = require("../middleware/async");
 const db = require("../config/connectDB");
 const errorResponse = require("../utils/errorResponse");
 const util = require("util");
-
+const request = require('request');
 const query = util.promisify(db.query).bind(db);
 
+// ip07ffn8Ch14XjKgOUSXeTpzd4jL5Lgxf8yRhKJ63fh
 // @desc    create Candidate
 // @route   POST /api/v1/candidate/
 // @access  Private
@@ -46,6 +47,10 @@ exports.saveBooking = asyncHandler(async (req, res, next) => {
     console.log(err);
     return next(new errorResponse(`Insert Failed`, 400));
   }
+  let name_room_2 = await findRoomById(id_room)
+
+  sendNotify(`ตอนนี้มีการจองห้องเรียนออนไลน์ ห้อง ${name_room_2[0].name} วันที่ ${start_date}  เวลา ${start_time} ถึง วันที่ ${end_date}  เวลา ${end_time}`)
+
   res.status(200).json({ success: true, room_booking_id: user.insertId });
 });
 
@@ -112,7 +117,7 @@ exports.statustime = asyncHandler(async (req, res, next) => {
 exports.getonestatus = asyncHandler(async (req, res, next) => {
   const { start_date, id } = req.body;
   // console.log(start_date, id);
-  let querySQL = "SELECT room_listname.id, room_listname.name as room_listname, room_booking.number_people, room_booking.topic, class_listname.name as class_listname, room_booking.bookingname, room_booking.number, room_booking.start_date, room_booking.start_time, room_booking.end_date, room_booking.end_time FROM room_booking JOIN class_listname ON class_listname.id = room_booking.id_class JOIN room_listname ON room_listname.id = room_booking.id_room WHERE room_booking.id_room = ? AND start_date = ?";
+  let querySQL = "SELECT room_listname.id, room_listname.name as room_listname, room_booking.number_people, room_booking.topic, class_listname.name as class_listname, room_booking.bookingname, room_booking.number, room_booking.start_date, room_booking.start_time, room_booking.end_date, room_booking.end_time FROM room_booking JOIN class_listname ON class_listname.id = room_booking.id_class JOIN room_listname ON room_listname.id = room_booking.id_room WHERE room_booking.id = ? AND start_date = ?";
   // let querySQL = `SELECT room_listname.id, room_listname.name as room_listname, room_booking.number_people, room_booking.topic, class_listname.name as class_listname, room_booking.bookingname, room_booking.number, room_booking.start_date, room_booking.start_time, room_booking.end_date, room_booking.end_time FROM room_booking JOIN class_listname ON class_listname.id = room_booking.id_class JOIN room_listname ON room_listname.id = room_booking.id_room WHERE room_booking.id_room = ? AND start_date=?`;
   const user = await query(querySQL,[id,start_date]);
   // console.log(user);
@@ -125,7 +130,8 @@ exports.getState = asyncHandler(async (req, res, next) => {
   const { start_date } = req.body;
 
   let querySQL = `SELECT
-        room_listname.id,
+          room_booking.id as id,
+          room_listname.id as room_listname_id,
           room_listname.name as room_listname,
           room_booking.number_people,
           room_booking.topic,
@@ -146,10 +152,12 @@ exports.getState = asyncHandler(async (req, res, next) => {
 
   let emtyRoom = [];
   userJson.forEach((val) => {
-    if (!emtyRoom.includes(val.id)) {
-      emtyRoom.push(val.id);
+    if (!emtyRoom.includes(val.room_listname_id)) {
+      emtyRoom.push(val.room_listname_id);
     }
   });
+
+  console.log(emtyRoom)
 
   let roomQuerySQL = `SELECT * ,null as room_listname , null as number_people , null as topic , null as class_listname , null as start_date , null as start_time , null as end_date , null as end_time FROM room_listname`;
   const room = await query(roomQuerySQL);
@@ -183,7 +191,7 @@ exports.getid = asyncHandler(async (req, res, next) => {
       JOIN class_listname ON class_listname.id = room_booking.id_class
       JOIN room_listname ON room_listname.id = room_booking.id_room
       WHERE
-      room_booking.id_room = ?`;
+      room_booking.id = ?`;
   const user = await query(querySQL, [start_id]);
   let userJson = Object.values(JSON.parse(JSON.stringify(user)));
 
@@ -193,6 +201,7 @@ exports.getid = asyncHandler(async (req, res, next) => {
 exports.getupdate = asyncHandler(async (req, res, next) => {
   const {
     id_room,
+    name_room,
     id_class,
     number_people,
     toping,
@@ -228,25 +237,53 @@ exports.getupdate = asyncHandler(async (req, res, next) => {
     console.log(err);
     return next(new errorResponse(`Insert Failed`, 400));
   }
+  let name_room_2 = await findRoomById(id_room)
 
+  console.log(name_room_2)
   // let userJson = Object.values(JSON.parse(JSON.stringify(user)));
-
+  sendNotify(`ตอนนี้ได้มีการแก้ไขการจองห้องเรียนออนไลน์ ห้อง ${name_room_2[0].name} วันที่ ${start_date}  เวลา ${start_time} ถึง วันที่ ${end_date}  เวลา ${end_time}`)
   res.status(200).json({ success: true, data: "successfully" });
 });
 
 exports.getdelete = asyncHandler(async (req, res, next) => {
   const { start_id } = req.body;
   let user;
+
+
+  let querySQL = `SELECT
+        room_listname.id as id_room,
+          room_listname.name as room_listname,
+          room_booking.number_people,
+          room_booking.topic,
+          class_listname.id as id_class,
+          class_listname.name as class_listname,
+          room_booking.bookingname,
+          room_booking.number,
+          room_booking.start_date,
+          room_booking.start_time,
+          room_booking.end_date,
+          room_booking.end_time,
+          room_booking.id
+      FROM
+          room_booking
+      JOIN class_listname ON class_listname.id = room_booking.id_class
+      JOIN room_listname ON room_listname.id = room_booking.id_room
+      WHERE
+      room_booking.id = ?`;
+  const user2 = await query(querySQL, [start_id]);
+  let userJson = Object.values(JSON.parse(JSON.stringify(user2)));
+
   try {
-    user = await query("DELETE FROM `room_booking` WHERE `id_room`= ?;", [
+    user = await query("DELETE FROM `room_booking` WHERE `id`= ?;", [
       start_id,
     ]);
   } catch (err) {
     console.log(err);
     return next(new errorResponse(`Error`, 400));
   }
-
   // let userJson = Object.values(JSON.parse(JSON.stringify(user)));
+  console.log(userJson)
+  sendNotify(`ตอนนี้ได้มีการยกเลิกการจองห้องเรียนออนไลน์ ห้อง ${userJson[0].room_listname} วันที่ ${userJson[0].start_date}  เวลา ${userJson[0].start_time} ถึง วันที่ ${userJson[0].end_date}  เวลา ${userJson[0].end_time}`)
 
   res.status(200).json({ success: true, data: "successfully" });
 });
@@ -299,3 +336,36 @@ exports.getDash = asyncHandler(async (req, res, next) => {
   };
   res.status(200).json({ success: true, data: list });
 });
+
+const findRoomById = async (id) => {
+  let bookmonth =
+  "SELECT * FROM `room_listname` WHERE `id` = ?";
+  const user4 = await query(bookmonth, [id]);
+  let usermonth = Object.values(JSON.parse(JSON.stringify(user4)));
+  return usermonth
+}
+
+
+const sendNotify = (message) => {
+  const url_line_notification = "https://notify-api.line.me/api/notify";
+
+  request({
+      method: 'POST',
+      uri: url_line_notification,
+      header: {
+          'Content-Type': 'multipart/form-data',
+      },
+      auth: {
+          bearer: "ip07ffn8Ch14XjKgOUSXeTpzd4jL5Lgxf8yRhKJ63fh",
+      },
+      form: {
+          message: message
+      },
+  }, (err, httpResponse, body) => {
+      if (err) {
+          console.log(err)
+      } else {
+          console.log(body)
+      }
+  });
+}
