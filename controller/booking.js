@@ -48,8 +48,9 @@ exports.saveBooking = asyncHandler(async (req, res, next) => {
     return next(new errorResponse(`Insert Failed`, 400));
   }
   let name_room_2 = await findRoomById(id_room)
+  let name_room_3 = await findClassRoomById(id_class)
 
-  sendNotify(`ตอนนี้มีการจองห้องเรียนออนไลน์ ห้อง ${name_room_2[0].name} วันที่ ${start_date}  เวลา ${start_time} ถึง วันที่ ${end_date}  เวลา ${end_time}`)
+  sendNotify(`ตอนนี้มีการจองห้องเรียนออนไลน์ \nห้อง ${name_room_2[0].name} \nชั้น ${name_room_3[0].name} \nวันที่ ${start_date} เวลา ${start_time} \nถึง วันที่ ${end_date}  เวลา ${end_time}`)
 
   res.status(200).json({ success: true, room_booking_id: user.insertId });
 });
@@ -238,10 +239,11 @@ exports.getupdate = asyncHandler(async (req, res, next) => {
     return next(new errorResponse(`Insert Failed`, 400));
   }
   let name_room_2 = await findRoomById(id_room)
+  let name_room_3 = await findClassRoomById(id_class)
 
   console.log(name_room_2)
   // let userJson = Object.values(JSON.parse(JSON.stringify(user)));
-  sendNotify(`ตอนนี้ได้มีการแก้ไขการจองห้องเรียนออนไลน์ ห้อง ${name_room_2[0].name} วันที่ ${start_date}  เวลา ${start_time} ถึง วันที่ ${end_date}  เวลา ${end_time}`)
+  sendNotify(`ตอนนี้ได้มีการแก้ไขการจองห้องเรียนออนไลน์ \nห้อง ${name_room_2[0].name} \nชั้น ${name_room_3[0].name} \nวันที่ ${start_date}  เวลา ${start_time} \nถึง วันที่ ${end_date}  เวลา ${end_time}`)
   res.status(200).json({ success: true, data: "successfully" });
 });
 
@@ -283,7 +285,7 @@ exports.getdelete = asyncHandler(async (req, res, next) => {
   }
   // let userJson = Object.values(JSON.parse(JSON.stringify(user)));
   console.log(userJson)
-  sendNotify(`ตอนนี้ได้มีการยกเลิกการจองห้องเรียนออนไลน์ ห้อง ${userJson[0].room_listname} วันที่ ${userJson[0].start_date}  เวลา ${userJson[0].start_time} ถึง วันที่ ${userJson[0].end_date}  เวลา ${userJson[0].end_time}`)
+  sendNotify(`ตอนนี้ได้มีการยกเลิกการจองห้องเรียนออนไลน์ \nห้อง ${userJson[0].room_listname} \nชั้น ${userJson[0].class_listname} \nวันที่ ${userJson[0].start_date}  เวลา ${userJson[0].start_time} \nถึง วันที่ ${userJson[0].end_date}  เวลา ${userJson[0].end_time}`)
 
   res.status(200).json({ success: true, data: "successfully" });
 });
@@ -340,6 +342,13 @@ exports.getDash = asyncHandler(async (req, res, next) => {
 const findRoomById = async (id) => {
   let bookmonth =
   "SELECT * FROM `room_listname` WHERE `id` = ?";
+  const user4 = await query(bookmonth, [id]);
+  let usermonth = Object.values(JSON.parse(JSON.stringify(user4)));
+  return usermonth
+}
+const findClassRoomById = async (id) => {
+  let bookmonth =
+  "SELECT * FROM `class_listname` WHERE `id` = ?";
   const user4 = await query(bookmonth, [id]);
   let usermonth = Object.values(JSON.parse(JSON.stringify(user4)));
   return usermonth
