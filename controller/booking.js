@@ -215,7 +215,9 @@ exports.getupdate = asyncHandler(async (req, res, next) => {
     etc,
     start_id,
   } = req.body;
+  
   let user;
+  console.log(req.body)
   try {
     user = await query(
       "UPDATE room_booking SET id_room=?,number_people=?,topic=?,id_class=?,bookingname=?,number=?,start_date=?,start_time=?,end_date=?,end_time=?,etc=? WHERE id=?",
@@ -234,17 +236,20 @@ exports.getupdate = asyncHandler(async (req, res, next) => {
         start_id,
       ]
     );
+    
   } catch (err) {
-    console.log(err);
+    
+    // console.log(err);
     return next(new errorResponse(`Insert Failed`, 400));
   }
   let name_room_2 = await findRoomById(id_room)
   let name_room_3 = await findClassRoomById(id_class)
 
-  console.log(name_room_2)
+  // console.log(name_room_2)
   // let userJson = Object.values(JSON.parse(JSON.stringify(user)));
   sendNotify(`ตอนนี้ได้มีการแก้ไขการจองห้องเรียนออนไลน์ \nห้อง ${name_room_2[0].name} \nชั้น ${name_room_3[0].name} \nวันที่ ${start_date}  เวลา ${start_time} \nถึง วันที่ ${end_date}  เวลา ${end_time}`)
   res.status(200).json({ success: true, data: "successfully" });
+  
 });
 
 exports.getdelete = asyncHandler(async (req, res, next) => {
